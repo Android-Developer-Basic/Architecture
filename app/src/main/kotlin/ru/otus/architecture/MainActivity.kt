@@ -12,8 +12,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        initializeMenu()
 
         (application as App).statService.logEvent(createPageEvent("onCreate"))
+    }
+
+    private fun initializeMenu() = with(binding) {
+        topAppBar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.item_settings -> {
+                    startActivity(SettingsActivity.createIntent(this@MainActivity))
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     override fun onStart() {

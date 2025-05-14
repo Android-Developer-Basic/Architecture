@@ -12,9 +12,6 @@ interface StatService {
      */
     fun logEvent(event: Event)
 
-    /**
-     * Android log service implementation
-     */
     class Logger: StatService {
         override fun logEvent(event: Event) {
             Log.i(  TAG, "Event: ${event.name}, Properties ${event.properties}")

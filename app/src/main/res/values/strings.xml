@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Architecture</string>
+    <string name="app_name">State Classic</string>
+    <string name="notifications_title">Notification settings</string>
+    <string name="item_settings">Settings</string>
 </resources>
