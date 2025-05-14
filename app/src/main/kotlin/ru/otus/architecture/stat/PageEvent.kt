@@ -23,8 +23,13 @@ data class PageEvent(
         private const val ACTION = "action"
     }
 }
+fun createPageEvent(
+    name: String,
+    action: String,
+    time: Instant = Clock.System.now()
+) = PageEvent(name, action, time)
 
 fun <T: Any> T.createPageEvent(
     action: String,
     time: Instant = Clock.System.now()
-) = PageEvent(requireNotNull(this::class.simpleName), action, time)
+) = createPageEvent(requireNotNull(this::class.simpleName), action, time)

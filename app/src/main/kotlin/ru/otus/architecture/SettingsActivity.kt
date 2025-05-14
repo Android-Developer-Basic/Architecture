@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import ru.otus.architecture.databinding.ActivitySettingsBinding
-import ru.otus.architecture.stat.createPageEvent
+import ru.otus.architecture.stat.PageEventHelper
 
 class SettingsActivity : AppCompatActivity() {
     companion object {
@@ -25,31 +25,6 @@ class SettingsActivity : AppCompatActivity() {
             finish()
         }
 
-        (application as App).statService.logEvent(createPageEvent("onCreate"))
-    }
-
-    override fun onStart() {
-        super.onStart()
-        (application as App).statService.logEvent(createPageEvent("onStart"))
-    }
-
-    override fun onResume() {
-        super.onResume()
-        (application as App).statService.logEvent(createPageEvent("onResume"))
-    }
-
-    override fun onPause() {
-        super.onPause()
-        (application as App).statService.logEvent(createPageEvent("onPause"))
-    }
-
-    override fun onStop() {
-        super.onStop()
-        (application as App).statService.logEvent(createPageEvent("onStop"))
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        (application as App).statService.logEvent(createPageEvent("onDestroy"))
+        lifecycle.addObserver(PageEventHelper((application as App).statService))
     }
 }
