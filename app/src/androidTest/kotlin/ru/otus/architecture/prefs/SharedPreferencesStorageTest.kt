@@ -12,7 +12,6 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 
 class SharedPreferencesStorageTest {
-
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 

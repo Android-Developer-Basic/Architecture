@@ -42,7 +42,7 @@ class SharedPreferencesStorage(context: Context, name: String) : KeyValueStorage
     }
 
     override fun liveData(key: String): LiveData<String?> = object : LiveData<String?>(get(key)) {
-        private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
+        private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, changedKey ->
             if (changedKey == key) {
                 postValue(get(key))
             }
