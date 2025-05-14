@@ -5,6 +5,7 @@ import android.graphics.Point
 import android.graphics.Rect
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.google.mlkit.vision.text.Text
@@ -35,7 +36,7 @@ class MainViewModelTest {
             every { this@mockk.liveData(any()) } returns prefix
             every { this@mockk.get(any()) } returns prefix.value
         }
-        viewModel = MainViewModel(storage)
+        viewModel = MainViewModel(storage, SavedStateHandle())
     }
 
     @Test
