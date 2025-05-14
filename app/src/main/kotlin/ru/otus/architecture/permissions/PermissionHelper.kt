@@ -21,18 +21,13 @@ class PermissionHelper(
 
     private val key = "PermissionHelper:$permissions"
 
-    private var launcher: ActivityResultLauncher<Array<String>>? = null
+    private lateinit var launcher: ActivityResultLauncher<Array<String>>
 
     private fun checkAlreadyGranted() = permissions.all {
         PackageManager.PERMISSION_GRANTED == context.checkSelfPermission(it)
     }
 
     override fun onCreate(owner: LifecycleOwner) {
-        if (checkAlreadyGranted()) {
-            onGranted()
-            return
-        }
-
         launcher = registry.register(key, ActivityResultContracts.RequestMultiplePermissions()) { result ->
             val granted = result.filterValues { it }.keys
             if (granted.containsAll(permissions)) {
@@ -59,6 +54,6 @@ class PermissionHelper(
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
-        launcher?.unregister()
+        launcher.unregister()
     }
 }
