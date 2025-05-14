@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED
 import androidx.camera.mlkit.vision.MlKitAnalyzer
@@ -20,23 +21,19 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import ru.otus.architecture.databinding.ActivityMainBinding
 import ru.otus.architecture.permissions.PermissionHelper
 import ru.otus.architecture.permissions.goToSettings
 import ru.otus.architecture.stat.PageEventHelper
-import kotlin.properties.Delegates
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var capturedBehavior: BottomSheetBehavior<ConstraintLayout>
 
-    private var content: String by Delegates.observable("") { _, _, newValue ->
-        binding.text.text = newValue.takeIf { it.isNotBlank() } ?: getString(R.string.text_scan_something)
-        binding.share.isEnabled = newValue.isNotBlank()
-    }
-    private var detectedText = ""
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,16 +45,7 @@ class MainActivity : AppCompatActivity() {
         initializeMenu()
         initializeContent()
         setupWindowInsets()
-        binding.btnSettings.setOnClickListener { goToSettings() }
-        binding.plus.setOnClickListener {
-            content += detectedText
-        }
-        binding.share.setOnClickListener {
-            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, content)
-            }, null))
-        }
+        initializeView()
 
         lifecycle.addObserver(PageEventHelper((application as App).statService))
         lifecycle.addObserver(
@@ -124,6 +112,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun initializeView() = with(binding) {
+        btnSettings.setOnClickListener { goToSettings() }
+        plus.setOnClickListener {
+            viewModel.addDetectedText()
+        }
+        share.setOnClickListener {
+            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, viewModel.content.value)
+            }, null))
+        }
+        viewModel.content.observe(this@MainActivity) {
+            text.text = it
+        }
+        viewModel.shareEnabled.observe(this@MainActivity) {
+            share.isEnabled = it
+        }
+        viewModel.addEnabled.observe(this@MainActivity) {
+            plus.isEnabled = it
+        }
+        viewModel.detectedRects.observe(this@MainActivity) {
+            overlay.rectBounds = it
+        }
+    }
+
     private fun initializeMenu() = with(binding) {
         topAppBar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -175,23 +188,8 @@ class MainActivity : AppCompatActivity() {
                     COORDINATE_SYSTEM_VIEW_REFERENCED,
                     executor
                 ) { analyzerResult ->
-                    analyzerResult.getValue(textRecognizer)?.let { result ->
-                        binding.overlay.rectBounds = result.textBlocks
-                            .takeIf { it.isNotEmpty() }
-                            ?.let {
-                                listOf(
-                                    Rect(
-                                        result.textBlocks.mapNotNull { it.boundingBox?.left }.min(),
-                                        result.textBlocks.mapNotNull { it.boundingBox?.top }.min(),
-                                        result.textBlocks.mapNotNull { it.boundingBox?.right }.max(),
-                                        result.textBlocks.mapNotNull { it.boundingBox?.bottom }.max()
-                                    )
-                                )
-                            }
-                            ?: emptyList()
-
-                        detectedText = result.text
-                        binding.plus.isEnabled = result.text.isNotBlank()
+                    analyzerResult.getValue(textRecognizer)?.let { result: Text ->
+                        viewModel.updateRecognizedText(result)
                     }
                 }
             )
