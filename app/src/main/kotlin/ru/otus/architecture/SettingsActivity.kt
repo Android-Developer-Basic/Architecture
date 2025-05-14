@@ -51,7 +51,7 @@ class SettingsActivity : AppCompatActivity() {
         lifecycle.addObserver(PageEventHelper((application as App).statService))
 
         viewModel.prefix.observe(this) {
-            binding.prefixEditText.setText(it)
+            binding.prefixEditText.setTextKeepState(it.orEmpty())
         }
         binding.prefixEditText.addTextChangedListener {
             viewModel.updatePrefix(it.toString())
