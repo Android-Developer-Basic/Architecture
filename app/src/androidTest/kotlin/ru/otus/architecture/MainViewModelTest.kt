@@ -4,14 +4,19 @@ import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.Rect
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.MutableLiveData
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.Text.Line
 import com.google.mlkit.vision.text.Text.TextBlock
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import ru.otus.architecture.prefs.KeyValueStorage
 
 @LargeTest
 @RunWith(AndroidJUnit4::class)
@@ -19,9 +24,22 @@ class MainViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
+    private lateinit var storage: KeyValueStorage
+    private lateinit var prefix: MutableLiveData<String?>
+    private lateinit var viewModel: MainViewModel
+
+    @Before
+    fun init() {
+        prefix = MutableLiveData(null)
+        storage = mockk {
+            every { this@mockk.liveData(any()) } returns prefix
+            every { this@mockk.get(any()) } returns prefix.value
+        }
+        viewModel = MainViewModel(storage)
+    }
+
     @Test
     fun returnsInitialState() {
-        val viewModel = MainViewModel()
         assert(viewModel.content.value == "")
         assert(viewModel.shareEnabled.value == false)
         assert(viewModel.addEnabled.value == false)
@@ -32,7 +50,6 @@ class MainViewModelTest {
     fun enablesAddButtonOnRecognizedText() {
         val observedValues = mutableListOf<Boolean>()
 
-        val viewModel = MainViewModel()
         viewModel.addEnabled.observeForever {
             observedValues.add(it)
         }
@@ -53,7 +70,6 @@ class MainViewModelTest {
 
         val observedValues = mutableListOf<List<Rect>>()
 
-        val viewModel = MainViewModel()
         viewModel.detectedRects.observeForever {
             observedValues.add(it)
         }
@@ -67,7 +83,6 @@ class MainViewModelTest {
     fun addsDetectedText() {
         val observedValues = mutableListOf<String>()
 
-        val viewModel = MainViewModel()
         viewModel.content.observeForever {
             observedValues.add(it)
         }
@@ -79,10 +94,24 @@ class MainViewModelTest {
     }
 
     @Test
+    fun changesContentWhenPrefixChanges() {
+        val observedValues = mutableListOf<String>()
+
+        viewModel.content.observeForever {
+            observedValues.add(it)
+        }
+
+        viewModel.updateRecognizedText(Text("Hello"))
+        viewModel.addDetectedText()
+        prefix.postValue("Prefix")
+
+        assert(observedValues == listOf("", "Hello", "Prefix\nHello"))
+    }
+
+    @Test
     fun enablesShareWhenContentIsNotEmpty() {
         val observedValues = mutableListOf<Boolean>()
 
-        val viewModel = MainViewModel()
         viewModel.shareEnabled.observeForever {
             observedValues.add(it)
         }
