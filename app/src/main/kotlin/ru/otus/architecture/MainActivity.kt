@@ -2,7 +2,10 @@ package ru.otus.architecture
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import ru.otus.architecture.databinding.ActivityMainBinding
+import ru.otus.architecture.permissions.PermissionHelper
+import ru.otus.architecture.permissions.goToSettings
 import ru.otus.architecture.stat.PageEventHelper
 
 class MainActivity : AppCompatActivity() {
@@ -14,8 +17,23 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         initializeMenu()
+        binding.btnSettings.setOnClickListener { goToSettings() }
 
         lifecycle.addObserver(PageEventHelper((application as App).statService))
+        lifecycle.addObserver(
+            PermissionHelper(
+                this,
+                activityResultRegistry,
+                setOf(android.Manifest.permission.CAMERA),
+                onGranted = { showCamera() },
+                onDenied = {
+                    with(binding) {
+                        content.isVisible = false
+                        permissionRequest.isVisible = true
+                    }
+                }
+            )
+        )
     }
 
     private fun initializeMenu() = with(binding) {
@@ -28,5 +46,10 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun showCamera() = with(binding) {
+        content.isVisible = true
+        permissionRequest.isVisible = false
     }
 }

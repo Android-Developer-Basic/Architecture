@@ -4,4 +4,5 @@
     <dimen name="horizontal_margin_small">8dp</dimen>
     <dimen name="vertical_margin">16dp</dimen>
     <dimen name="vertical_margin_small">8dp</dimen>
+    <dimen name="permission_icon">128dp</dimen>
 </resources>
